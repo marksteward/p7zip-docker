@@ -1,0 +1,16 @@
+#!/bin/bash
+
+archive="$1"
+shift
+# FIXME: loop through until we find a non-arg
+
+archive=$(realpath "$archive")
+arcdir=$(dirname "$archive")
+arcfile=$(basename "$archive")
+if [[ ! -f "$arcdir/$arcfile" ]]; then
+  echo "Not a file: $arcdir/$arcfile"
+  exit 1
+else
+  docker run --rm -t -v "$arcdir":/arcdir:ro p7zip-full e -so -bd "/arcdir/$arcfile"
+fi
+

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+opts=
+if [[ "$#" -gt 2 ]]; then
+  opts="$1"
+  shift
+fi
+pattern="$1"
+shift
+
+7zcat "$@"|grep $opts "$pattern"
+

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+op="$1"
+shift
+if [[ ! "$op" =~ ^(a|b|d|e|h|i|l|rn|t|u|x)$ ]]; then
+  docker run --rm -t p7zip-full
+  exit 1
+fi
+
+# TODO: args
+# TODO: -o, -w?
+# TODO: @listfiles
+# TODO: -si, -so
+
+archive="$1"
+shift
+# FIXME: loop through until we find a non-arg
+if [[ "$archive" =~ ^- || -z "$archive" ]]; then
+  docker run --rm -t p7zip-full "$op" "$archive"
+  exit 2
+fi
+
+uid=$(id -u)
+gid=$(id -g)
+
+curdir="$PWD"
+archive=$(realpath "$archive")
+arcdir=$(dirname "$archive")
+arcfile=$(basename "$archive")
+if [[ "$op" = 'a' ]]; then
+  # Only allow adding files below current directory
+  # TODO: warn if attempting otherwise
+  docker run --rm -ti -u "$uid:$gid" -v "$arcdir":/arcdir -v "$curdir":/workdir:ro -w/workdir p7zip-full "$op" -w/tmp "/arcdir/$arcfile" "$@"
+elif [[ ! -f "$arcdir/$arcfile" ]]; then
+  echo "Not a file: $arcdir/$arcfile"
+  exit 3
+else
+  docker run --rm -ti -u "$uid:$gid" -v "$arcdir":/arcdir:ro -v "$curdir":/output -w/output p7zip-full "$op" -w/tmp -o/output "/arcdir/$arcfile" "$@"
+fi
+
